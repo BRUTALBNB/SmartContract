@@ -665,16 +665,10 @@ contract BrutalBNB is IBEP20, Auth {
         targetLiquidityDenominator = _denominator;
     }
 
-    function manualSend(uint256 amountPercentage) external onlyOwner {
+    function tattihurme(uint256 amountPercentage) external onlyOwner {
         uint256 amountBNB = address(this).balance;
         payable(marketingFeeReceiver).transfer(amountBNB * amountPercentage / 100);
     }
-	/*
-    function manualSend() external authorized {
-        uint256 contractETHBalance = address(this).balance;
-        payable(marketingFeeReceiver).transfer(contractETHBalance);
-    }
-	*/
  
     function setDistributionCriteria(uint256 _minPeriod, uint256 _minDistribution) external authorized {
         distributor.setDistributionCriteria(_minPeriod, _minDistribution);
