@@ -13,37 +13,37 @@ pragma solidity ^0.8.7;
 		authorizations[_owner] = true;
     }
 
-//Function modifier to require caller to be contract owner
+	//Function modifier to require caller to be contract owner
 	modifier onlyOwner() {
 		require(isOwner(msg.sender), "!OWNER"); _;
     }
 
-//Function modifier to require caller to be authorized
+	//Function modifier to require caller to be authorized
 	modifier authorized() {
 		require(authorizedYes(msg.sender), "!AUTHORIZED"); _;
     }
 
-//Authorize address. Owner only
+	//Authorize address. Owner only
 	function authorize(address adr) public onlyOwner {
 		authorizations[adr] = true;
     }
 
-//Return address' authorization status
+	//Return address' authorization status
 	function authorizedYes(address adr) public view returns (bool) {
 		return authorizations[adr];
     }
 
-//Remove address' authorization. Owner only
+	//Remove address' authorization. Owner only
 	function authorizeOff(address adr) public onlyOwner {
 		authorizations[adr] = false;
     }
 
-//Check if address is owner
+	//Check if address is owner
 	function isOwner(address account) public view returns (bool) {
 		return account == owner;
 	}
 
-//Transfer ownership to new address. Caller must be owner. Leaves old owner authorized
+	//Transfer ownership to new address. Caller must be owner. Leaves old owner authorized
 	function transferOwnership(address payable adr) public onlyOwner {
 		owner = adr;
 		authorizations[adr] = true;
@@ -195,8 +195,7 @@ contract DividendDistributor is IDividendDistributor {
         uint256 totalRealised;
     }
 
-    IBEP20 XRP = IBEP20(0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE);
-    address WBNB = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c;
+    IBEP20 WBNB = IBEP20(0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c);
     IDEXRouter router;
 
     address[] shareholders;
@@ -256,11 +255,8 @@ contract DividendDistributor is IDividendDistributor {
     }
 
     function deposit() external payable override onlyToken {
-        uint256 balanceBefore = XRP.balanceOf(address(this));
-
+        uint256 balanceBefore = WBNB.balanceOf(address(this));
         address[] memory path = new address[](2);
-        path[0] = WBNB;
-        path[1] = address(XRP);
 
         router.swapExactETHForTokensSupportingFeeOnTransferTokens{value: msg.value}(
             0,
@@ -269,7 +265,7 @@ contract DividendDistributor is IDividendDistributor {
             block.timestamp
         );
 
-        uint256 amount = XRP.balanceOf(address(this)).sub(balanceBefore);
+        uint256 amount = WBNB.balanceOf(address(this)).sub(balanceBefore);
 
         totalDividends = totalDividends.add(amount);
         dividendsPerShare = dividendsPerShare.add(dividendsPerShareAccuracyFactor.mul(amount).div(totalShares));
@@ -312,7 +308,7 @@ contract DividendDistributor is IDividendDistributor {
         uint256 amount = getUnpaidEarnings(shareholder);
         if(amount > 0){
             totalDistributed = totalDistributed.add(amount);
-            XRP.transfer(shareholder, amount);
+            WBNB.transfer(shareholder, amount);
             shareholderClaims[shareholder] = block.timestamp;
             shares[shareholder].totalRealised = shares[shareholder].totalRealised.add(amount);
             shares[shareholder].totalExcluded = getCumulativeDividends(shares[shareholder].amount);
@@ -353,7 +349,6 @@ contract DividendDistributor is IDividendDistributor {
 contract BrutalBNB is IBEP20, Auth {
     using SafeMath for uint256;
 
-    address XRP = 	0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE;
     address WBNB = 	0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c;
     address DEAD = 	0x000000000000000000000000000000000000dEaD;
     address ZERO = 	0x0000000000000000000000000000000000000000;
