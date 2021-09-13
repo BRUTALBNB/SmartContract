@@ -669,3 +669,4 @@ contract BrutalBNB is IBEP20, Auth {
 
 	event AutoLiquify(uint256 kulli, uint256 pillu);
 }
+
