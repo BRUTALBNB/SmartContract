@@ -195,7 +195,7 @@ contract DividendDistributor is IDividendDistributor {
         uint256 totalRealised;
     }
 
-    IBEP20 WBNB = IBEP20(0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c);
+    IBEP20 WBNB = IBEP20 //(0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c);
     IDEXRouter router;
 
     address[] shareholders;
@@ -346,6 +346,9 @@ contract DividendDistributor is IDividendDistributor {
     }
 }
 
+/*
+* BrutalBNB Contract
+*/
 contract BrutalBNB is IBEP20, Auth {
     using SafeMath for uint256;
 
@@ -358,7 +361,7 @@ contract BrutalBNB is IBEP20, Auth {
     uint8 constant _decimals = 9;
 
     uint256 _totalSupply = 1 * 10**9 * (10 ** _decimals);
-    uint256 public _maxTxAmount = _totalSupply / 100;  //1% Max transfer
+    uint256 public _maxTxAmount = _totalSupply / 100;  //1% Max transfer																		
 
     uint256 public _maxWalletToken = ( _totalSupply * 2 ) / 100;  //2% Max wallet
 
@@ -366,8 +369,7 @@ contract BrutalBNB is IBEP20, Auth {
     mapping (address => mapping (address => uint256)) _allowances;
 
     mapping (address => bool) isFeeExempt;
-    mapping (address => bool) isTxLimitExempt;
-    mapping (address => bool) isTimelockExempt;
+    mapping (address => bool) isTxLimitExempt;											  
     mapping (address => bool) isDividendExempt;
 
     uint256 liquidityFee    = 3;
@@ -392,11 +394,6 @@ contract BrutalBNB is IBEP20, Auth {
     DividendDistributor distributor;
     uint256 distributorGas = 500000;
 
-    // Cooldown & timer functionality
-    bool public buyCooldownEnabled = true;
-    uint8 public cooldownTimerInterval = 5;
-    mapping (address => uint) private cooldownTimer;
-
     bool public swapEnabled = true;
     uint256 public swapThreshold = _totalSupply * 10 / 10000; // 0.01% of supply
     bool inSwap;
@@ -411,13 +408,8 @@ contract BrutalBNB is IBEP20, Auth {
 
         isFeeExempt[msg.sender] = true;
         isTxLimitExempt[msg.sender] = true;
-        isTxLimitExempt[DEAD] = true;
-
-        // No timelock for these people
-        isTimelockExempt[msg.sender] = true;
-        isTimelockExempt[DEAD] = true;
-        isTimelockExempt[address(this)] = true;
-
+        isTxLimitExempt[DEAD] = true;										   
+		
         isDividendExempt[pair] = true;
         isDividendExempt[address(this)] = true;
         isDividendExempt[DEAD] = true;
@@ -461,14 +453,15 @@ contract BrutalBNB is IBEP20, Auth {
         return _transferFrom(sender, recipient, amount);
     }
 
-    //settting the maximum permitted wallet holding (percent of total supply)
+    //setting the maximum permitted wallet holding (percent of total supply)
      function setMaxWalletPercent(uint256 maxWallPercent) external onlyOwner() {
         _maxWalletToken = (_totalSupply * maxWallPercent ) / 100;
     }
 
     function _transferFrom(address sender, address recipient, uint256 amount) internal returns (bool) {
-        if(inSwap){ return _basicTransfer(sender, recipient, amount); }
+        //if(inSwap){ return _basicTransfer(sender, recipient, amount); }
 
+		//Check if tradingOpen
         if(!authorizations[sender] && !authorizations[recipient]){
             require(tradingOpen,"Trading not open yet");
         }
@@ -477,17 +470,6 @@ contract BrutalBNB is IBEP20, Auth {
         if (!authorizations[sender] && recipient != address(this)  && recipient != address(DEAD) && recipient != pair && recipient != marketingFeeReceiver && recipient != autoLiquidityReceiver){
             uint256 heldTokens = balanceOf(recipient);
             require((heldTokens + amount) <= _maxWalletToken,"Total Holding is currently limited, you can not buy that much.");}
-
-
-
-        // cooldown timer, so a bot doesnt do quick trades! 1min gap between 2 trades.
-        if (sender == pair &&
-            buyCooldownEnabled &&
-            !isTimelockExempt[recipient]) {
-            require(cooldownTimer[recipient] < block.timestamp,"Please wait for 1min cooldown between buys");
-            cooldownTimer[recipient] = block.timestamp + cooldownTimerInterval;
-        }
-
 
         // Checks max transaction limit
         checkTxLimit(sender, amount);
@@ -527,7 +509,7 @@ contract BrutalBNB is IBEP20, Auth {
     function checkTxLimit(address sender, uint256 amount) internal view {
         require(amount <= _maxTxAmount || isTxLimitExempt[sender], "TX Limit Exceeded");
     }
-
+	
     function shouldTakeFee(address sender) internal view returns (bool) {
         return !isFeeExempt[sender];
     }
@@ -553,11 +535,6 @@ contract BrutalBNB is IBEP20, Auth {
         tradingOpen = _status;
     }
 
-    // enable cooldown between trades
-    function cooldownEnabled(bool _status, uint8 _interval) public onlyOwner {
-        buyCooldownEnabled = _status;
-        cooldownTimerInterval = _interval;
-    }
 
     function swapBack() internal swapping {
         uint256 dynamicLiquidityFee = isOverLiquified(targetLiquidity, targetLiquidityDenominator) ? 0 : liquidityFee;
@@ -613,7 +590,7 @@ contract BrutalBNB is IBEP20, Auth {
         require(amount >= _totalSupply / 1000);
         _maxTxAmount = amount;
     }
-
+	
     function setIsDividendExempt(address holder, bool exempt) external authorized {
         require(holder != address(this) && holder != pair);
         isDividendExempt[holder] = exempt;
@@ -630,11 +607,7 @@ contract BrutalBNB is IBEP20, Auth {
 
     function setIsTxLimitExempt(address holder, bool exempt) external authorized {
         isTxLimitExempt[holder] = exempt;
-    }
-
-    function setIsTimelockExempt(address holder, bool exempt) external authorized {
-        isTimelockExempt[holder] = exempt;
-    }
+    }																				  
 
     function setFees(uint256 _liquidityFee, uint256 _reflectionFee, uint256 _marketingFee, uint256 _feeDenominator) external authorized {
         liquidityFee = _liquidityFee;
