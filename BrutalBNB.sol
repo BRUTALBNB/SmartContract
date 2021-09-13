@@ -195,7 +195,7 @@ contract DividendDistributor is IDividendDistributor {
         uint256 totalRealised;
     }
 
-    IBEP20 WBNB = IBEP20 //(0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c);
+    IBEP20 WBNB = IBEP20 (0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c);
     IDEXRouter router;
 
     address[] shareholders;
@@ -667,5 +667,5 @@ contract BrutalBNB is IBEP20, Auth {
         return getLiquidityBacking(accuracy) > target;
     }
 
-	event AutoLiquify(uint256 weiner, uint256 peach);
+	event AutoLiquify(uint256 kulli, uint256 pillu);
 }
